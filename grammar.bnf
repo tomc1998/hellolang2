@@ -1,0 +1,43 @@
+Program ::= Stmt ";" Program
+Program ::= Control Program
+Program ::= ""
+
+Stmt ::= Declaration | Assignment | FunctionCall
+
+Declaration ::= Type Identifier | Type Identifier "=" Expression
+Type ::= "string" | "int" | "float" | "bool"
+
+Assignment ::= Identifier "=" Expression
+Expression ::= ArithmeticExpression | StringLiteral | BooleanLiteral | FunctionCall
+ArithmeticExpression ::= Term Op1 ArithmeticExpression | Term | "-" Term
+Term ::= Identifier | 
+         Identifier Op0 Term | 
+         NumberLiteral | 
+         NumberLiteral Op0 Term | 
+         FunctionCall
+
+// Operators, in order of precedence
+Op0 ::= "*" | "/" | "%"
+Op1 ::= "+" | "-"
+
+StringLiteral ::= Delimited string, with "\" as an escape for quotation marks.
+BooleanLiteral ::= "true" | "false"
+NumberLiteral ::= NumString | NumString "." NumString
+NumString ::= Digit NumString | Digit
+Digit ::= "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9"
+
+
+FunctionCall ::= Identifier "(" ParameterList ")"
+ParameterList ::= Parameter "," ParameterList | Parameter
+Parameter ::= Expression
+
+Control ::= If | While
+If ::= "if" "(" BooleanExpression ") "{" Program "}"
+If ::= "if" "(" BooleanExpression ") "{" Program "}" "else" "{" Program "}"
+While ::= "if" "(" BooleanExpression ") "{" Program "}"
+BooleanExpression ::= BooleanTerm BooleanOperator BooleanExpression | BooleanTerm
+BooleanTerm ::= "!" "(" BooleanTerm ")"
+BooleanTerm ::= "!" Identifier | Identifier
+BooleanTerm ::= ArithmeticExpression ComparisonOperator ArithmeticExpression
+BooleanOperator ::= "&&" | "||"
+ComparisonOperator ::= "==" | ">" | "<" | ">=" |"<="

@@ -22,7 +22,7 @@ fn main() {
 
     match std::fs::read_to_string(&filename) {
         Ok(source) => {
-            let tokens = lex::lex(&source);
+            let tokens = lex::lex(&source, &filename);
             println!("Tokens: {:?}", tokens);
         }
         Err(error) => match error.kind() {
