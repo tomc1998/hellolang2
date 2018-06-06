@@ -1,0 +1,8 @@
+[package]
+name = "hellolang2"
+version = "0.1.0"
+authors = ["Thomas Cheng <thomascheng1998@googlemail.com>"]
+
+[dependencies]
+clap = "2.31.2"
+colored = "1.6"
