@@ -23,6 +23,11 @@ fn main() {
     match std::fs::read_to_string(&filename) {
         Ok(source) => {
             let tokens = lex::lex(&source, &filename);
+            if tokens.is_err() {
+                tokens.unwrap_err().print_formatted();
+                return;
+            }
+            let tokens = tokens.unwrap();
             println!("Tokens: {:?}", tokens);
         }
         Err(error) => match error.kind() {
