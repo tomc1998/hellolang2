@@ -16,6 +16,7 @@ while (i <= n) {
             println("%d", id);
         }
     }
+    i = i + 1;
 }
 
 println("Hello, world!");

@@ -6,7 +6,7 @@ pub struct Point(usize);
 
 #[derive(Eq, PartialEq, Debug, Clone, Copy, Hash)]
 pub enum TokenType {
-    Ident, Punc, Key, Op, Lit
+    Ident, Punc, Key, Op, ArithLit, StringLit
 }
 
 #[derive(Eq, PartialEq, Debug, Clone, Copy, Hash)]
@@ -29,7 +29,10 @@ impl Token {
     pub fn new_op(start: usize, end: usize) -> Token {
         Token { start: Point(start), end: Point(end), token_type: TokenType::Op }
     }
-    pub fn new_lit(start: usize, end: usize) -> Token {
-        Token { start: Point(start), end: Point(end), token_type: TokenType::Lit }
+    pub fn new_arith_lit(start: usize, end: usize) -> Token {
+        Token { start: Point(start), end: Point(end), token_type: TokenType::ArithLit }
+    }
+    pub fn new_string_lit(start: usize, end: usize) -> Token {
+        Token { start: Point(start), end: Point(end), token_type: TokenType::StringLit }
     }
 }
