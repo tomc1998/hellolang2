@@ -1,0 +1,20 @@
+int i = 1;
+int n = 100;
+
+while (i <= n) {
+    if (i % 3 == 0) {
+        if (i % 5 == 0) {
+            println("FizzBuzz");
+        } else {
+            println("Fizz");
+        }
+    } else {
+        if (i % 5 == 0) {
+            println("Buzz");
+        }
+        else {
+            println("%d", id);
+        }
+    }
+    i = i + 1;
+}

@@ -1,3 +1,5 @@
+#![cfg_attr(feature = "nightly", feature(test))]
+
 extern crate clap;
 extern crate colored;
 
@@ -40,3 +42,6 @@ fn main() {
         }
     }
 }
+
+#[cfg(all(feature = "nightly", test))]
+mod benches;
