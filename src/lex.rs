@@ -31,7 +31,7 @@ impl LexErr {
 pub fn try_punc(cix: &mut CharIndices) -> Result<Option<Token>, LexErr> {
     let (ix, c) = cix.clone().next().unwrap();
     match c {
-        ';' | '(' | ')' | '{' | '}' => {
+        ';' | '(' | ')' | '{' | '}' | ',' => {
             cix.next().unwrap();
             Ok(Some(Token::new_punc(ix, ix + 1)))
         }
@@ -42,34 +42,35 @@ pub fn try_punc(cix: &mut CharIndices) -> Result<Option<Token>, LexErr> {
 pub fn try_op(cix: &mut CharIndices) -> Result<Option<Token>, LexErr> {
     let mut clone = cix.clone();
     let (ix, c) = clone.next().unwrap();
-    match c {
+    let (tok, consumed) = match c {
         '*' | '/' | '+' | '-' | '%' => {
-            cix.next().unwrap();
-            Ok(Some(Token::new_op(ix, ix+1)))
+            (Token::new_op(ix, ix+1), 1)
         }
         '=' | '>' | '<' => {
             match clone.next() {
-                None => Err(LexErr::Raw(format!("Unexpected EOF at operator `{}`.", c))),
-                Some((_, '=')) => Ok(Some(Token::new_op(ix, ix+2))),
-                _ => Ok(Some(Token::new_op(ix, ix+1)))
+                None => return Err(LexErr::Raw(format!("Unexpected EOF at operator `{}`.", c))),
+                Some((_, '=')) => (Token::new_op(ix, ix+2), 2),
+                _ => (Token::new_op(ix, ix+1), 1)
             }
         }
         '&' => {
             match clone.next() {
-                None => Err(LexErr::Raw(format!("Unexpected EOF at operator `{}`.", c))),
-                Some((_, '&')) => Ok(Some(Token::new_op(ix, ix+2))),
-                _ => Err(LexErr::Raw("Bitwise & operator is not supported.".to_owned()))
+                None => return Err(LexErr::Raw(format!("Unexpected EOF at operator `{}`.", c))),
+                Some((_, '&')) => (Token::new_op(ix, ix+2), 2),
+                _ => return Err(LexErr::Raw("Bitwise & operator is not supported.".to_owned()))
             }
         }
         '|' => {
             match clone.next() {
-                None => Err(LexErr::Raw("Unexpected EOF at operator `{}`.".to_owned())),
-                Some((_, '|')) => Ok(Some(Token::new_op(ix, ix+2))),
-                _ => Err(LexErr::Raw(format!("Bitwise | operator is not supported."))),
+                None => return Err(LexErr::Raw("Unexpected EOF at operator `{}`.".to_owned())),
+                Some((_, '|')) => (Token::new_op(ix, ix+2), 2),
+                _ => return Err(LexErr::Raw(format!("Bitwise | operator is not supported."))),
             }
         }
-        _ => Ok(None)
-    }
+        _ => return Ok(None)
+    };
+    for _ in 0..consumed { cix.next(); }
+    Ok(Some(tok))
 }
 
 pub fn try_key(cix: &mut CharIndices) -> Result<Option<Token>, LexErr> {
@@ -123,39 +124,64 @@ pub fn try_string_lit(cix: &mut CharIndices) -> Result<Option<Token>, LexErr> {
     } else { Ok(None) }
 }
 
-pub fn try_string_lit(cix: &mut CharIndices) -> Result<Option<Token>, LexErr> {
-    if cix.clone().next().unwrap().1 == '"' {
-        let (start, _) = cix.next().unwrap();
-        // Keep consuming until we hit another unescaped "
-        let mut escaped = false;
-        let mut end = None;
-        while let Some((ix, c)) = cix.next() {
-            if escaped {
-                escaped = false;
-                continue;
-            } else if c == '\\' {
-                escaped = true;
-                continue;
-            } else if c == '"' {
-                end = Some(ix + 1);
+pub fn try_num_lit(cix: &mut CharIndices) -> Result<Option<Token>, LexErr> {
+    let mut clone = cix.clone();
+    let (start, first) = clone.next().unwrap();
+    if first.is_digit(10) || first == '-' {
+        // Consume until we hit a non-digit
+        let mut num_consumed = 1;
+        let mut consumed_decimal_point = false;
+        let mut end = start;
+        while let Some((ix, c)) = clone.next() {
+            if c.is_alphabetic() {
+                return Err(LexErr::Raw("Identifier cannot start with a number".to_owned()));
+            } else if c == '.' && consumed_decimal_point {
+                return Err(LexErr::Raw("Error: num literal contains more than 1 decimal place".to_owned()));
+            } else if !c.is_digit(10) && c != '.' {
                 break;
+            } else if c == '.' {
+                consumed_decimal_point = true;
+                continue;
             }
+            num_consumed += 1;
+            end = ix;
         }
-        match end {
-            None => Err(LexErr::Raw("Unexpected EOF in string literal".to_owned())),
-            Some(end) => Ok(Some(Token::new_string_lit(start, end)))
-        }
+        for _ in 0..num_consumed { cix.next(); } // Advance the iterator
+        Ok(Some(Token::new_num_lit(start, end)))
     } else { Ok(None) }
+}
+
+pub fn try_ident(cix: &mut CharIndices) -> Result<Option<Token>, LexErr> {
+    let mut clone = cix.clone();
+    let (start, first) = clone.next().unwrap();
+    if first.is_alphabetic() {
+        // Consume until we hit a non-alphanumeric
+        let mut num_consumed = 1;
+        let mut end = start;
+        while let Some((ix, c)) = clone.next() {
+            if !c.is_alphanumeric() { break; }
+            num_consumed += 1;
+            end = ix;
+        }
+        for _ in 0..num_consumed { cix.next(); } // Advance the iterator
+        Ok(Some(Token::new_ident(start, end)))
+
+    } else { Ok(None) }
+
 }
 
 pub fn lex_token(cix: &mut CharIndices) -> Result<Token, LexErr> {
     if let Some(tok) = try_punc(cix)? {
+        Ok(tok)
+    } else if let Some(tok) = try_num_lit(cix)? {
         Ok(tok)
     } else if let Some(tok) = try_op(cix)? {
         Ok(tok)
     } else if let Some(tok) = try_key(cix)? {
         Ok(tok)
     } else if let Some(tok) = try_string_lit(cix)? {
+        Ok(tok)
+    } else if let Some(tok) = try_ident(cix)? {
         Ok(tok)
     } else {
         return Err(LexErr::Raw("Unknown token".to_owned()));
