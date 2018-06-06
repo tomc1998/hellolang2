@@ -98,12 +98,64 @@ pub fn try_key(cix: &mut CharIndices) -> Result<Option<Token>, LexErr> {
     }
 }
 
+pub fn try_string_lit(cix: &mut CharIndices) -> Result<Option<Token>, LexErr> {
+    if cix.clone().next().unwrap().1 == '"' {
+        let (start, _) = cix.next().unwrap();
+        // Keep consuming until we hit another unescaped "
+        let mut escaped = false;
+        let mut end = None;
+        while let Some((ix, c)) = cix.next() {
+            if escaped {
+                escaped = false;
+                continue;
+            } else if c == '\\' {
+                escaped = true;
+                continue;
+            } else if c == '"' {
+                end = Some(ix + 1);
+                break;
+            }
+        }
+        match end {
+            None => Err(LexErr::Raw("Unexpected EOF in string literal".to_owned())),
+            Some(end) => Ok(Some(Token::new_string_lit(start, end)))
+        }
+    } else { Ok(None) }
+}
+
+pub fn try_string_lit(cix: &mut CharIndices) -> Result<Option<Token>, LexErr> {
+    if cix.clone().next().unwrap().1 == '"' {
+        let (start, _) = cix.next().unwrap();
+        // Keep consuming until we hit another unescaped "
+        let mut escaped = false;
+        let mut end = None;
+        while let Some((ix, c)) = cix.next() {
+            if escaped {
+                escaped = false;
+                continue;
+            } else if c == '\\' {
+                escaped = true;
+                continue;
+            } else if c == '"' {
+                end = Some(ix + 1);
+                break;
+            }
+        }
+        match end {
+            None => Err(LexErr::Raw("Unexpected EOF in string literal".to_owned())),
+            Some(end) => Ok(Some(Token::new_string_lit(start, end)))
+        }
+    } else { Ok(None) }
+}
+
 pub fn lex_token(cix: &mut CharIndices) -> Result<Token, LexErr> {
     if let Some(tok) = try_punc(cix)? {
         Ok(tok)
     } else if let Some(tok) = try_op(cix)? {
         Ok(tok)
     } else if let Some(tok) = try_key(cix)? {
+        Ok(tok)
+    } else if let Some(tok) = try_string_lit(cix)? {
         Ok(tok)
     } else {
         return Err(LexErr::Raw("Unknown token".to_owned()));
