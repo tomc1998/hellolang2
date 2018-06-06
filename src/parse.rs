@@ -1,6 +1,10 @@
 #![allow(dead_code)]
 
 use token::Token;
+use std;
+
+type TokenIter<'a> = std::slice::Iter<'a, Token>;
+type ParseRes = Result<Node, ParseErr>;
 
 #[derive(Eq, PartialEq, Debug, Clone)]
 pub enum ParseErr {
@@ -49,10 +53,28 @@ pub enum NodeType {
 #[derive(Eq, PartialEq, Debug, Clone)]
 pub struct Node {
     /// node_type == Term(_) implies children.len() == 0
-    node_type: NodeType,
-    children: Vec<Node>
+    pub node_type: NodeType,
+    pub children: Vec<Node>
 }
 
-pub fn parse(_tokens: &[Token]) -> Result<Node, ParseErr> {
-    unimplemented!();
+pub fn parse_program(tokens: &mut TokenIter, src: &str) -> ParseRes {
+    // Check if this is a control or stmt
+    let mut children = Vec::new();
+    while let Some(tok) = tokens.clone().next() {
+        match tok.val(src) {
+            ";" => { tokens.next().unwrap(); }
+            "}" => { tokens.next().unwrap(); break }
+            "if" | "while" => unimplemented!(),
+            _ => unimplemented!(),
+        }
+    }
+    Ok(Node {
+        node_type: NodeType::NTerm(NTermType::Program),
+        children: children
+    })
+}
+
+pub fn parse(tokens: &[Token], src: &str) -> ParseRes {
+    debug_assert!(!tokens.is_empty());
+    parse_program(&mut tokens.iter(), src)
 }

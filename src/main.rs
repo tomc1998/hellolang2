@@ -32,7 +32,7 @@ fn main() {
             }
             let tokens = tokens.unwrap();
             println!("Tokens: {:?}", tokens);
-            let parse_tree = parse::parse(&tokens[..]);
+            let parse_tree = parse::parse(&tokens[..], &source);
             println!("Parse tree: {:?}", parse_tree);
         }
         Err(error) => match error.kind() {

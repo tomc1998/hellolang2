@@ -232,6 +232,10 @@ pub fn lex_token(cix: &mut CharIndices) -> Result<Token, LexErr> {
 }
 
 pub fn lex(src: &str, file: &str) -> Result<Vec<Token>, LexErr> {
+    if src.is_empty() {
+        return Err(LexErr::Raw("File is empty.".to_owned()));
+    }
+
     let mut tokens = Vec::new();
     let mut char_ix = src.char_indices();
     let mut line_num = 0;

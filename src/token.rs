@@ -14,7 +14,7 @@ pub struct Token {
     token_type: TokenType,
 }
 
-impl Token {
+impl<'a> Token {
     pub fn new_ident(start: usize, end: usize) -> Token {
         Token { start: Point(start), end: Point(end), token_type: TokenType::Ident }
     }
@@ -38,5 +38,11 @@ impl Token {
     }
     pub fn new_core_type(start: usize, end: usize) -> Token {
         Token { start: Point(start), end: Point(end), token_type: TokenType::CoreType }
+    }
+
+    pub fn val(&'a self, src: &'a str) -> &'a str {
+        unsafe {
+            src.slice_unchecked(self.start.0, self.end.0)
+        }
     }
 }
