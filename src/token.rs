@@ -1,12 +1,10 @@
-#![allow(dead_code)]
-
 /// An index into some source code
 #[derive(Ord, Eq, PartialEq, PartialOrd, Debug, Clone, Copy, Hash)]
 pub struct Point(usize);
 
 #[derive(Eq, PartialEq, Debug, Clone, Copy, Hash)]
 pub enum TokenType {
-    Ident, Punc, Key, Op, NumLit, StringLit
+    Ident, Punc, Key, Op, NumLit, StringLit, BoolLit, CoreType,
 }
 
 #[derive(Eq, PartialEq, Debug, Clone, Copy, Hash)]
@@ -34,5 +32,11 @@ impl Token {
     }
     pub fn new_string_lit(start: usize, end: usize) -> Token {
         Token { start: Point(start), end: Point(end), token_type: TokenType::StringLit }
+    }
+    pub fn new_bool_lit(start: usize, end: usize) -> Token {
+        Token { start: Point(start), end: Point(end), token_type: TokenType::BoolLit }
+    }
+    pub fn new_core_type(start: usize, end: usize) -> Token {
+        Token { start: Point(start), end: Point(end), token_type: TokenType::CoreType }
     }
 }

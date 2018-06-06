@@ -151,6 +151,46 @@ pub fn try_num_lit(cix: &mut CharIndices) -> Result<Option<Token>, LexErr> {
     } else { Ok(None) }
 }
 
+pub fn try_core_type(cix: &mut CharIndices) -> Result<Option<Token>, LexErr> {
+    let start = cix.clone().next().unwrap().0;
+    let as_str = cix.as_str();
+    if let Some((tok, to_consume)) = if as_str.starts_with("string") {
+        let len = "string".len();
+        Some((Token::new_core_type(start, start + len), len))
+    } else if as_str.starts_with("float") {
+        let len = "float".len();
+        Some((Token::new_core_type(start, start + len), len))
+    } else if as_str.starts_with("bool") {
+        let len = "bool".len();
+        Some((Token::new_core_type(start, start + len), len))
+    } else if as_str.starts_with("int") {
+        let len = "int".len();
+        Some((Token::new_core_type(start, start + len), len))
+    } else { None } {
+        for _ in 0..to_consume { cix.next(); }
+        Ok(Some(tok))
+    } else {
+        Ok(None)
+    }
+}
+
+pub fn try_bool_lit(cix: &mut CharIndices) -> Result<Option<Token>, LexErr> {
+    let start = cix.clone().next().unwrap().0;
+    let as_str = cix.as_str();
+    if let Some((tok, to_consume)) = if as_str.starts_with("true") {
+        let len = "true".len();
+        Some((Token::new_bool_lit(start, start + len), len))
+    } else if as_str.starts_with("false") {
+        let len = "false".len();
+        Some((Token::new_bool_lit(start, start + len), len))
+    } else { None } {
+        for _ in 0..to_consume { cix.next(); }
+        Ok(Some(tok))
+    } else {
+        Ok(None)
+    }
+}
+
 pub fn try_ident(cix: &mut CharIndices) -> Result<Option<Token>, LexErr> {
     let mut clone = cix.clone();
     let (start, first) = clone.next().unwrap();
@@ -167,7 +207,6 @@ pub fn try_ident(cix: &mut CharIndices) -> Result<Option<Token>, LexErr> {
         Ok(Some(Token::new_ident(start, end)))
 
     } else { Ok(None) }
-
 }
 
 pub fn lex_token(cix: &mut CharIndices) -> Result<Token, LexErr> {
@@ -176,6 +215,10 @@ pub fn lex_token(cix: &mut CharIndices) -> Result<Token, LexErr> {
     } else if let Some(tok) = try_num_lit(cix)? {
         Ok(tok)
     } else if let Some(tok) = try_op(cix)? {
+        Ok(tok)
+    } else if let Some(tok) = try_bool_lit(cix)? {
+        Ok(tok)
+    } else if let Some(tok) = try_core_type(cix)? {
         Ok(tok)
     } else if let Some(tok) = try_key(cix)? {
         Ok(tok)

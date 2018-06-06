@@ -5,6 +5,7 @@ extern crate colored;
 mod output;
 mod token;
 mod lex;
+mod parse;
 
 use std::io::{ErrorKind};
 use clap::{App, Arg};
@@ -29,6 +30,8 @@ fn main() {
             }
             let tokens = tokens.unwrap();
             println!("Tokens: {:?}", tokens);
+            let parse_tree = parse::parse(&tokens[..]);
+            println!("Parse tree: {:?}", parse_tree);
         }
         Err(error) => match error.kind() {
             ErrorKind::NotFound => error_raw!("File `{}` not found", filename.blue()),

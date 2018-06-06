@@ -9,7 +9,7 @@ Type ::= "string" | "int" | "float" | "bool"
 
 Assignment ::= Identifier "=" Expression
 Expression ::= ArithmeticExpression | StringLiteral | BooleanLiteral | FunctionCall
-ArithmeticExpression ::= Term Op1 ArithmeticExpression | Term | "-" Term
+ArithmeticExpression ::= Term Op1 ArithmeticExpression | Term
 Term ::= Identifier | 
          Identifier Op0 Term | 
          NumberLiteral | 
@@ -22,7 +22,10 @@ Op1 ::= "+" | "-"
 
 StringLiteral ::= Delimited string, with "\" as an escape for quotation marks.
 BooleanLiteral ::= "true" | "false"
-NumberLiteral ::= NumString | NumString "." NumString
+NumberLiteral ::= NumString |
+                  NumString "." NumString |
+                  "-" NumString |
+                  "-" NumString "." NumString
 NumString ::= Digit NumString | Digit
 Digit ::= "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9"
 
