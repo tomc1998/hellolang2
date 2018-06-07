@@ -12,6 +12,16 @@ pub enum ParseErr {
     Point(String, Token),
 }
 
+impl ParseErr {
+    /// Print this error
+    pub fn print_formatted(&self) {
+        match *self {
+            ParseErr::Raw(ref s) => error_raw!("{}", s),
+            ParseErr::Point(ref s, ref t) => error_raw!("{} - {:?}", s, t),
+        }
+    }
+}
+
 #[derive(Eq, PartialEq, Debug, Clone)]
 pub enum NTermType {
     Program,
@@ -199,6 +209,39 @@ fn parse_parameter_list(tokens: &mut TokenIter, src: &str) -> ParseRes {
     })
 }
 
+fn parse_declaration(tokens: &mut TokenIter, src: &str) -> ParseRes {
+    unimplemented!()
+}
+
+fn parse_assignment(tokens: &mut TokenIter, src: &str) -> ParseRes {
+    unimplemented!()
+}
+
+fn parse_stmt(tokens: &mut TokenIter, src: &str) -> ParseRes {
+    let mut clone = tokens.clone();
+    let child = match clone.next().ok_or(ParseErr::Raw("Unexpected EOF".to_owned()))? {
+        // Assignment or function call
+        tok if tok.token_type == TokenType::Ident =>
+            match clone.next().ok_or(ParseErr::Raw("Unexpected EOF".to_owned()))? {
+                // Function call
+                tok if tok.val(src) == "(" => parse_function_call(tokens, src)?,
+                // Assignment
+                tok if tok.val(src) == "=" => parse_assignment(tokens, src)?,
+                tok => return Err(ParseErr::Point("Expected '(' or '='".to_owned(), *tok))
+            },
+        // Decl
+        tok if tok.token_type == TokenType::CoreType =>
+            parse_declaration(tokens, src)?,
+        tok => return Err(
+            ParseErr::Point("Expected declaration, assignment, or function call."
+                            .to_owned(), *tok))
+    };
+    Ok(Node {
+        node_type: NodeType::NTerm(NTermType::Stmt),
+        children: vec![child],
+    })
+}
+
 fn parse_if_control(tokens: &mut TokenIter, src: &str) -> ParseRes {
     Ok(Node {
         node_type: NodeType::NTerm(NTermType::If),
@@ -216,7 +259,7 @@ fn parse_if_control(tokens: &mut TokenIter, src: &str) -> ParseRes {
 
 fn parse_while_control(tokens: &mut TokenIter, src: &str) -> ParseRes {
     Ok(Node {
-        node_type: NodeType::NTerm(NTermType::If),
+        node_type: NodeType::NTerm(NTermType::While),
         children: vec![
             term(*tokens.next().unwrap()), // while
             assert_term(tokens, src, "(")?,
@@ -234,12 +277,16 @@ fn parse_program(tokens: &mut TokenIter, src: &str) -> ParseRes {
     // Check if this is a control or stmt
     let mut children = Vec::new();
     while let Some(tok) = tokens.clone().next() {
-        println!("{:?} - {:?}", tok.val(src), children);
         match tok.val(src) {
             "}" => { break }
             "if" => children.push(parse_if_control(tokens, src)?),
-            "while" => children.push(parse_if_control(tokens, src)?),
-            _ => unimplemented!(),
+            "while" => children.push(parse_while_control(tokens, src)?),
+            _ => {
+                children.push(parse_stmt(tokens, src)?);
+                // Just ignore ; for convenience in AST gen. Potentially
+                // annoying errors generated, but probs worth in the long run.
+                assert_term(tokens, src, ";");
+            }
         }
     }
     Ok(Node {

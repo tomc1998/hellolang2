@@ -197,11 +197,11 @@ pub fn try_ident(cix: &mut CharIndices) -> Result<Option<Token>, LexErr> {
     if first.is_alphabetic() {
         // Consume until we hit a non-alphanumeric
         let mut num_consumed = 1;
-        let mut end = start;
+        let mut end = start + 1;
         while let Some((ix, c)) = clone.next() {
             if !c.is_alphanumeric() { break; }
             num_consumed += 1;
-            end = ix;
+            end = ix + 1;
         }
         for _ in 0..num_consumed { cix.next(); } // Advance the iterator
         Ok(Some(Token::new_ident(start, end)))
