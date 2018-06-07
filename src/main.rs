@@ -34,7 +34,7 @@ fn main() {
             println!("Tokens: {:?}", tokens);
             let parse_tree = parse::parse(&tokens[..], &source);
             if parse_tree.is_err() {
-                parse_tree.unwrap_err().print_formatted();
+                parse_tree.unwrap_err().print_formatted(&filename, &source);
                 return;
             }
             let parse_tree = parse_tree.unwrap();

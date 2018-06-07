@@ -14,10 +14,21 @@ pub enum ParseErr {
 
 impl ParseErr {
     /// Print this error
-    pub fn print_formatted(&self) {
+    pub fn print_formatted(&self, filename: &str, src: &str) {
         match *self {
-            ParseErr::Raw(ref s) => error_raw!("{}", s),
-            ParseErr::Point(ref s, ref t) => error_raw!("{} - {:?}", s, t),
+            ParseErr::Raw(ref s) => error_raw!("{} - {}", filename, s),
+            ParseErr::Point(ref s, ref t) => {
+                // find the line num
+                let mut line_num = 1;
+                for (ix, c) in src.char_indices() {
+                    if ix == t.start.0 { break; }
+                    if c == '\n' {
+                        line_num += 1;
+                    }
+                }
+
+                error_point!(s, filename, line_num);
+            }
         }
     }
 }
@@ -210,11 +221,24 @@ fn parse_parameter_list(tokens: &mut TokenIter, src: &str) -> ParseRes {
 }
 
 fn parse_declaration(tokens: &mut TokenIter, src: &str) -> ParseRes {
-    unimplemented!()
+    Ok(Node {
+        node_type: NodeType::NTerm(NTermType::Declaration),
+        children: vec![
+            assert_term_with_type(tokens, TokenType::CoreType)?,
+            assert_term_with_type(tokens, TokenType::Ident)?,
+            assert_term(tokens, src, "=")?,
+            parse_expression(tokens, src)?],
+    })
 }
 
 fn parse_assignment(tokens: &mut TokenIter, src: &str) -> ParseRes {
-    unimplemented!()
+    Ok(Node {
+        node_type: NodeType::NTerm(NTermType::Assignment),
+        children: vec![
+            assert_term_with_type(tokens, TokenType::Ident)?,
+            assert_term(tokens, src, "=")?,
+            parse_expression(tokens, src)?],
+    })
 }
 
 fn parse_stmt(tokens: &mut TokenIter, src: &str) -> ParseRes {
@@ -243,17 +267,28 @@ fn parse_stmt(tokens: &mut TokenIter, src: &str) -> ParseRes {
 }
 
 fn parse_if_control(tokens: &mut TokenIter, src: &str) -> ParseRes {
+    let mut children = vec![
+        term(*tokens.next().unwrap()), // if
+        assert_term(tokens, src, "(")?,
+        parse_expression(tokens, src)?,
+        assert_term(tokens, src, ")")?,
+        assert_term(tokens, src, "{")?,
+        parse_program(tokens, src)?,
+        assert_term(tokens, src, "}")?,
+    ];
+    match tokens.clone().next() {
+        Some(tok) if tok.val(src) == "else" => {
+            children.push(term(*tokens.next().unwrap())); // else
+            children.push(assert_term(tokens, src, "{")?);
+            children.push(parse_program(tokens, src)?);
+            children.push(assert_term(tokens, src, "}")?);
+        }
+        _ => (),
+    }
+
     Ok(Node {
         node_type: NodeType::NTerm(NTermType::If),
-        children: vec![
-            term(*tokens.next().unwrap()), // if
-            assert_term(tokens, src, "(")?,
-            parse_expression(tokens, src)?,
-            assert_term(tokens, src, ")")?,
-            assert_term(tokens, src, "{")?,
-            parse_program(tokens, src)?,
-            assert_term(tokens, src, "}")?,
-            ]
+        children: children
     })
 }
 
@@ -285,7 +320,7 @@ fn parse_program(tokens: &mut TokenIter, src: &str) -> ParseRes {
                 children.push(parse_stmt(tokens, src)?);
                 // Just ignore ; for convenience in AST gen. Potentially
                 // annoying errors generated, but probs worth in the long run.
-                assert_term(tokens, src, ";");
+                assert_term(tokens, src, ";")?;
             }
         }
     }

@@ -1,6 +1,6 @@
 /// An index into some source code
 #[derive(Ord, Eq, PartialEq, PartialOrd, Debug, Clone, Copy, Hash)]
-pub struct Point(usize);
+pub struct Point(pub usize);
 
 #[derive(Eq, PartialEq, Debug, Clone, Copy, Hash)]
 pub enum TokenType {

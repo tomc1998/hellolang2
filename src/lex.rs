@@ -84,6 +84,16 @@ pub fn try_key(cix: &mut CharIndices) -> Result<Option<Token>, LexErr> {
                 } else { Ok(None) }
             }
         }
+    } else if cix.as_str().starts_with("else") {
+        match cix.clone().skip(4).next() {
+            None => Err(LexErr::Raw(format!("Unexpected EOF after `else`"))),
+            Some((end, c)) => {
+                if c.is_whitespace() || c == '(' {
+                    for _ in 0..4 { cix.next(); } // Consume the 'else'
+                    Ok(Some(Token::new_key(end - 4, end)))
+                } else { Ok(None) }
+            }
+        }
     } else if cix.as_str().starts_with("while") {
         match cix.clone().skip(5).next() {
             None => Err(LexErr::Raw(format!("Unexpected EOF after `while`"))),
