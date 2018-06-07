@@ -214,6 +214,22 @@ fn parse_if_control(tokens: &mut TokenIter, src: &str) -> ParseRes {
     })
 }
 
+fn parse_while_control(tokens: &mut TokenIter, src: &str) -> ParseRes {
+    Ok(Node {
+        node_type: NodeType::NTerm(NTermType::If),
+        children: vec![
+            term(*tokens.next().unwrap()), // while
+            assert_term(tokens, src, "(")?,
+            parse_expression(tokens, src)?,
+            assert_term(tokens, src, ")")?,
+            assert_term(tokens, src, "{")?,
+            parse_program(tokens, src)?,
+            assert_term(tokens, src, "}")?,
+        ]
+    })
+}
+
+
 fn parse_program(tokens: &mut TokenIter, src: &str) -> ParseRes {
     // Check if this is a control or stmt
     let mut children = Vec::new();
@@ -222,7 +238,7 @@ fn parse_program(tokens: &mut TokenIter, src: &str) -> ParseRes {
         match tok.val(src) {
             "}" => { break }
             "if" => children.push(parse_if_control(tokens, src)?),
-            "while" => unimplemented!(),
+            "while" => children.push(parse_if_control(tokens, src)?),
             _ => unimplemented!(),
         }
     }
