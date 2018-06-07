@@ -1,5 +1,5 @@
 Program ::= Stmt ";" Program
-Program ::= Control Program
+Program ::= If Program | While Program
 Program ::= ""
 
 Stmt ::= Declaration | Assignment | FunctionCall
@@ -8,8 +8,6 @@ Declaration ::= Type Identifier | Type Identifier "=" Expression
 Type ::= "string" | "int" | "float" | "bool"
 
 Assignment ::= Identifier "=" Expression
-
-Expression ::= Term3
 
 Atom ::= Identifier | StringLiteral | NumberLiteral | BooleanLiteral | FunctionCall
 
@@ -20,10 +18,10 @@ Op2 ::= "==" | ">" | "<" | ">=" |"<="
 Op3 ::= "&&" | "||"
 
 // Term types, matches operators
-Term0 ::= Atom Op0 Term0 // Terms
+Term0 ::= Atom Op0 Term0 | Atom // Terms
 Term1 ::= Term0 Op1 Term1 | Term0 // Arithmetic exprs
 Term2 ::= Term1 Op2 Term2 | Term1 // Comparisons
-Term3 ::= Term2 Op3 Term3 | Term2 // Boolean ops (&& or ||)
+Expression ::= Term2 Op3 Expression | Term2 // Boolean ops (&& or ||)
 
 StringLiteral ::= Delimited string, with "\" as an escape for quotation marks.
 BooleanLiteral ::= "true" | "false"
@@ -39,7 +37,7 @@ Digit ::= "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9"
 
 
 FunctionCall ::= Identifier "(" ParameterList ")"
-ParameterList ::= Parameter "," ParameterList | Parameter
+ParameterList ::= Expression "," ParameterList | Expression
 Parameter ::= Expression
 
 Control ::= If | While

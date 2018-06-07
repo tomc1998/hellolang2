@@ -74,23 +74,23 @@ pub fn try_op(cix: &mut CharIndices) -> Result<Option<Token>, LexErr> {
 }
 
 pub fn try_key(cix: &mut CharIndices) -> Result<Option<Token>, LexErr> {
-    if cix.as_str() == "if" {
+    if cix.as_str().starts_with("if") {
         match cix.clone().skip(2).next() {
             None => Err(LexErr::Raw(format!("Unexpected EOF after `if`"))),
-            Some((start, c)) => {
+            Some((end, c)) => {
                 if c.is_whitespace() || c == '(' {
                     for _ in 0..2 { cix.next(); } // Consume the 'if'
-                    Ok(Some(Token::new_key(start, start + 2)))
+                    Ok(Some(Token::new_key(end - 2, end)))
                 } else { Ok(None) }
             }
         }
-    } else if cix.as_str() == "while" {
+    } else if cix.as_str().starts_with("while") {
         match cix.clone().skip(5).next() {
             None => Err(LexErr::Raw(format!("Unexpected EOF after `while`"))),
-            Some((start, c)) => {
+            Some((end, c)) => {
                 if c.is_whitespace() || c == '(' {
                     for _ in 0..5 { cix.next(); } // Consume the 'while'
-                    Ok(Some(Token::new_key(start, start + 5)))
+                    Ok(Some(Token::new_key(end - 5, end)))
                 } else { Ok(None) }
             }
         }

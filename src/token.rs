@@ -9,9 +9,9 @@ pub enum TokenType {
 
 #[derive(Eq, PartialEq, Debug, Clone, Copy, Hash)]
 pub struct Token {
-    start: Point,
-    end: Point,
-    token_type: TokenType,
+    pub start: Point,
+    pub end: Point,
+    pub token_type: TokenType,
 }
 
 impl<'a> Token {
