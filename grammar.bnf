@@ -8,20 +8,28 @@ Declaration ::= Type Identifier | Type Identifier "=" Expression
 Type ::= "string" | "int" | "float" | "bool"
 
 Assignment ::= Identifier "=" Expression
-Expression ::= ArithmeticExpression | StringLiteral | BooleanLiteral | FunctionCall
-ArithmeticExpression ::= Term Op1 ArithmeticExpression | Term
-Term ::= Identifier | 
-         Identifier Op0 Term | 
-         NumberLiteral | 
-         NumberLiteral Op0 Term | 
-         FunctionCall
+
+Expression ::= Term3
+
+Atom ::= Identifier | StringLiteral | NumberLiteral | BooleanLiteral | FunctionCall
 
 // Operators, in order of precedence
 Op0 ::= "*" | "/" | "%"
 Op1 ::= "+" | "-"
+Op2 ::= "==" | ">" | "<" | ">=" |"<="
+Op3 ::= "&&" | "||"
+
+// Term types, matches operators
+Term0 ::= Atom Op0 Term0 // Terms
+Term1 ::= Term0 Op1 Term1 | Term0 // Arithmetic exprs
+Term2 ::= Term1 Op2 Term2 | Term1 // Comparisons
+Term3 ::= Term2 Op3 Term3 | Term2 // Boolean ops (&& or ||)
 
 StringLiteral ::= Delimited string, with "\" as an escape for quotation marks.
 BooleanLiteral ::= "true" | "false"
+
+// Numberliteral recognised in the parse tree as 1 terminal node, this is merely
+// to qualify
 NumberLiteral ::= NumString |
                   NumString "." NumString |
                   "-" NumString |
@@ -35,12 +43,6 @@ ParameterList ::= Parameter "," ParameterList | Parameter
 Parameter ::= Expression
 
 Control ::= If | While
-If ::= "if" "(" BooleanExpression ") "{" Program "}"
-If ::= "if" "(" BooleanExpression ") "{" Program "}" "else" "{" Program "}"
-While ::= "if" "(" BooleanExpression ") "{" Program "}"
-BooleanExpression ::= BooleanTerm BooleanOperator BooleanExpression | BooleanTerm
-BooleanTerm ::= "!" "(" BooleanTerm ")"
-BooleanTerm ::= "!" Identifier | Identifier
-BooleanTerm ::= ArithmeticExpression ComparisonOperator ArithmeticExpression
-BooleanOperator ::= "&&" | "||"
-ComparisonOperator ::= "==" | ">" | "<" | ">=" |"<="
+If ::= "if" "(" Expression ") "{" Program "}"
+If ::= "if" "(" Expression ") "{" Program "}" "else" "{" Program "}"
+While ::= "if" "(" Expression ") "{" Program "}"
